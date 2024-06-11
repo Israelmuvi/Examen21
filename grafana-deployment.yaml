@@ -1,7 +1,9 @@
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: grafana-deployment
+  name: grafana
+  labels:
+    app: grafana
 spec:
   replicas: 1
   selector:
@@ -17,13 +19,25 @@ spec:
           image: grafana/grafana:latest
           ports:
             - containerPort: 3000
+          env:
+            - name: GF_SECURITY_ADMIN_USER
+              valueFrom:
+                secretKeyRef:
+                  name: admin
+                  key: admin
+            - name: GF_SECURITY_ADMIN_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: grafana-admin
+                  key: admin-password
           volumeMounts:
-            - name: grafana-data
+            - name: grafana-storage
               mountPath: /var/lib/grafana
             - name: grafana-provisioning
-              mountPath: /etc/grafana/provisioning
+              mountPath: /etc/grafana/provisioning/datasources
+              subPath: datasources.yaml
       volumes:
-        - name: grafana-data
+        - name: grafana-storage
           persistentVolumeClaim:
             claimName: grafana-pvc
         - name: grafana-provisioning
